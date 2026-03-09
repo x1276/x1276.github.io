@@ -99,8 +99,18 @@
     }
 
     @keyframes pulse {
-      0%,100% { box-shadow: 0 0 40px 20px rgba(196,98,45,0.5), 0 0 100px 60px rgba(196,98,45,0.2); }
-      50%      { box-shadow: 0 0 55px 30px rgba(196,98,45,0.65), 0 0 130px 80px rgba(196,98,45,0.3); }
+      0%,100% {
+        box-shadow:
+          0 0 40px 20px rgba(196,98,45,0.52),
+          0 0 100px 60px rgba(196,98,45,0.22),
+          0 0 200px 120px rgba(140,58,26,0.12);
+      }
+      50% {
+        box-shadow:
+          0 0 58px 32px rgba(210,110,40,0.68),
+          0 0 130px 82px rgba(196,98,45,0.36),
+          0 0 260px 150px rgba(140,58,26,0.20);
+      }
     }
 
     /* ── MOUNTAINS 1 — far, pale ───────────────────────── */
@@ -141,7 +151,136 @@
       pointer-events: none;
     }
 
-    /* ── SEARCH UI ──────────────────────────────────────── */
+    /* ── SETTINGS BUTTON ────────────────────────────────── */
+    #settings-btn {
+      position: fixed;
+      bottom: 24px; left: 28px;
+      z-index: 200;
+      width: 32px; height: 32px;
+      background: transparent;
+      border: 1.5px solid var(--grey3);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s, border-color 0.2s;
+    }
+    #settings-btn:hover { border-color: var(--red); }
+    body:hover #settings-btn { opacity: 1; }
+
+    #settings-btn svg {
+      transition: transform 0.1s;
+    }
+    #settings-btn.spinning svg {
+      animation: gear-spin 1.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    @keyframes gear-spin {
+      0%   { transform: rotate(0deg); }
+      40%  { transform: rotate(200deg); }
+      70%  { transform: rotate(290deg); }
+      85%  { transform: rotate(340deg); }
+      93%  { transform: rotate(355deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* ── SETTINGS PANEL ─────────────────────────────────── */
+
+    /* wrapper that animates height */
+    #ui-body {
+      width: 100%;
+      overflow: hidden;
+      max-height: 80px; /* search bar + badge */
+      transition: max-height 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #ui-body.expanded {
+      max-height: 400px;
+    }
+
+    #search-view {
+      width: 100%;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 140ms ease-in, transform 140ms ease-in;
+    }
+    #search-view.hiding {
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+    }
+    #search-view.hidden {
+      display: none;
+      opacity: 0;
+    }
+    #search-view.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #settings-panel {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 160ms ease-out 100ms, transform 160ms ease-out 100ms;
+    }
+    #settings-panel.active {
+      display: flex;
+    }
+    #settings-panel.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--grey2);
+      padding: 9px 14px;
+      gap: 12px;
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-label {
+      font-family: 'Courier Prime', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--grey4);
+      text-transform: uppercase;
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+    .setting-value {
+      font-family: 'Courier Prime', monospace;
+      font-size: 12px;
+      color: var(--cream);
+      background: transparent;
+      border: none;
+      outline: none;
+      flex: 1;
+      caret-color: var(--red);
+      letter-spacing: 0.05em;
+    }
+    .setting-value:focus { color: #fff; }
+    select.setting-value {
+      cursor: pointer;
+      background: transparent;
+      color: var(--cream);
+    }
+    select.setting-value option { background: #1a1210; color: var(--cream); }
+    .setting-save {
+      font-family: 'Oswald', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      color: var(--red);
+      background: transparent;
+      border: 1px solid var(--red);
+      padding: 3px 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .setting-save:hover { background: var(--red); color: var(--cream); }
     #ui {
       position: fixed;
       top: 38%;
@@ -224,6 +363,8 @@
       letter-spacing: 0.25em;
       color: var(--grey4);
       text-transform: uppercase;
+      width: 100%;
+      text-align: right;
     }
     .engine-badge span { color: var(--red); }
 
@@ -286,13 +427,8 @@
       <div class="sky-fill"></div>
     </li>
 
-    <!-- 2. SUN -->
-    <li class="layer" id="layer-sun" data-depth="0.15">
-      <div class="sun-wrap"><div class="sun"></div></div>
-    </li>
-
-    <!-- 1.5 GRID — behind all mountains -->
-    <li class="layer" id="layer-grid" data-depth="0.2">
+    <!-- 1.5 GRID — behind sun and all mountains -->
+    <li class="layer" id="layer-grid" data-depth="0.12">
       <div style="position:absolute;top:-20%;left:-20%;width:140%;height:140%;
         background-image:
           linear-gradient(rgba(192,57,43,0.06) 1px, transparent 1px),
@@ -302,18 +438,26 @@
       </div>
     </li>
 
+    <!-- 2. SUN -->
+    <li class="layer" id="layer-sun" data-depth="0.15">
+      <div class="sun-wrap"><div class="sun"></div></div>
+    </li>
+
     <!-- 3. MOUNTAINS — far -->
     <li class="layer" id="layer-mountains1" data-depth="0.25">
-      <!-- viewBox wider than screen, left/right extended by 300px each side -->
       <svg viewBox="-300 0 2040 320" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" style="position:absolute;bottom:0;width:130%;left:-15%;height:auto;">
-        <polygon points="-300,320 -300,180 -180,130 -80,170 20,110 120,155 220,90 340,140 460,75 580,125 700,65 820,115 940,55 1060,105 1180,75 1300,115 1380,85 1500,120 1620,70 1740,115 1860,80 1960,110 2060,90 2060,320" fill="#3d2a22" opacity="0.75"/>
+        <g id="mtn-drift-1">
+          <polygon points="-300,320 -300,180 -180,130 -80,170 20,110 120,155 220,90 340,140 460,75 580,125 700,65 820,115 940,55 1060,105 1180,75 1300,115 1380,85 1500,120 1620,70 1740,115 1860,80 1960,110 2060,90 2060,320" fill="#3d2a22" opacity="0.75"/>
+        </g>
       </svg>
     </li>
 
     <!-- 4. MOUNTAINS — mid -->
     <li class="layer" id="layer-mountains2" data-depth="0.4">
       <svg viewBox="-300 0 2040 320" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" style="position:absolute;bottom:0;width:130%;left:-15%;height:auto;">
-        <polygon points="-300,320 -300,230 -180,175 -60,215 40,155 160,195 260,130 380,175 500,110 620,155 740,95 860,145 980,90 1100,140 1220,85 1340,130 1460,100 1580,140 1700,90 1820,135 1940,95 2060,130 2060,320" fill="#2a1e1a" opacity="0.9"/>
+        <g id="mtn-drift-2">
+          <polygon points="-300,320 -300,230 -180,175 -60,215 40,155 160,195 260,130 380,175 500,110 620,155 740,95 860,145 980,90 1100,140 1220,85 1340,130 1460,100 1580,140 1700,90 1820,135 1940,95 2060,130 2060,320" fill="#2a1e1a" opacity="0.9"/>
+        </g>
       </svg>
     </li>
 
@@ -329,12 +473,14 @@
             <rect x="1330" y="144" width="90"  height="63"/>
           </clipPath>
         </defs>
-        <polygon
-          points="-300,320 -300,270 -220,245 -140,268 -80,200 0,255 60,255 120,220 180,205 240,248 300,250 360,215 420,198 480,245 540,248 600,210 660,188 720,238 780,240 840,195 900,182 960,232 1020,235 1080,192 1140,178 1200,228 1260,230 1320,196 1380,192 1440,232 1500,235 1560,196 1620,188 1680,230 1740,232 1800,198 1860,195 1940,225 2060,210 2060,320"
-          fill="#1a1210"/>
-        <polygon
-          points="-300,320 -300,270 -220,245 -140,268 -80,200 0,255 60,255 120,220 180,205 240,248 300,250 360,215 420,198 480,245 540,248 600,210 660,188 720,238 780,240 840,195 900,182 960,232 1020,235 1080,192 1140,178 1200,228 1260,230 1320,196 1380,192 1440,232 1500,235 1560,196 1620,188 1680,230 1740,232 1800,198 1860,195 1940,225 2060,210 2060,320"
-          fill="#d4d0c9" opacity="0.5" clip-path="url(#snow-clip)"/>
+        <g id="mtn-drift-3">
+          <polygon
+            points="-300,320 -300,270 -220,245 -140,268 -80,200 0,255 60,255 120,220 180,205 240,248 300,250 360,215 420,198 480,245 540,248 600,210 660,188 720,238 780,240 840,195 900,182 960,232 1020,235 1080,192 1140,178 1200,228 1260,230 1320,196 1380,192 1440,232 1500,235 1560,196 1620,188 1680,230 1740,232 1800,198 1860,195 1940,225 2060,210 2060,320"
+            fill="#1a1210"/>
+          <polygon
+            points="-300,320 -300,270 -220,245 -140,268 -80,200 0,255 60,255 120,220 180,205 240,248 300,250 360,215 420,198 480,245 540,248 600,210 660,188 720,238 780,240 840,195 900,182 960,232 1020,235 1080,192 1140,178 1200,228 1260,230 1320,196 1380,192 1440,232 1500,235 1560,196 1620,188 1680,230 1740,232 1800,198 1860,195 1940,225 2060,210 2060,320"
+            fill="#d4d0c9" opacity="0.5" clip-path="url(#snow-clip)"/>
+        </g>
       </svg>
     </li>
 
@@ -356,21 +502,80 @@
 
   </ul>
 
+  <!-- ── SETTINGS BUTTON ── -->
+  <button id="settings-btn" title="Settings">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="7" cy="7" r="2" stroke="#7a7a7a" stroke-width="1.2"/>
+      <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.93 2.93l1.06 1.06M10.01 10.01l1.06 1.06M2.93 11.07l1.06-1.06M10.01 3.99l1.06-1.06" stroke="#7a7a7a" stroke-width="1.2" stroke-linecap="square"/>
+    </svg>
+  </button>
+
   <!-- ── UI OVERLAY ── -->
   <div id="ui">
-    <div class="ui-label">// search //</div>
-    <div class="search-wrap">
-      <input
-        id="search-input"
-        type="text"
-        placeholder="SEARCH..."
-        autocomplete="off"
-        spellcheck="false"
-        autofocus
-      />
-      <button id="search-btn" type="button">GO</button>
-    </div>
-    <div class="engine-badge" id="engine-badge">via <span id="engine-name">duckduckgo</span></div>
+    <div class="ui-label" id="ui-label">// search //</div>
+
+    <!-- animated container -->
+    <div id="ui-body">
+      <!-- SEARCH VIEW -->
+      <div id="search-view">
+        <div class="search-wrap">
+          <input
+            id="search-input"
+            type="text"
+            placeholder="SEARCH..."
+            autocomplete="off"
+            spellcheck="false"
+            autofocus
+          />
+          <button id="search-btn" type="button">GO</button>
+        </div>
+        <div class="engine-badge" id="engine-badge">via <span id="engine-name">duckduckgo</span></div>
+      </div>
+
+      <!-- SETTINGS VIEW -->
+      <div id="settings-panel">
+      <div class="search-wrap" style="flex-direction:column; padding:0;">
+        <div class="setting-row">
+          <span class="setting-label">search engine</span>
+          <select class="setting-value" id="cfg-engine">
+            <option value="duckduckgo">duckduckgo</option>
+            <option value="google">google</option>
+            <option value="brave">brave</option>
+            <option value="bing">bing</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">jokes file</span>
+          <input class="setting-value" id="cfg-jokes" type="text" spellcheck="false"/>
+          <button class="setting-save" id="cfg-jokes-save">apply</button>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">playlist dir</span>
+          <input class="setting-value" id="cfg-playlist" type="text" spellcheck="false"/>
+          <button class="setting-save" id="cfg-playlist-save">apply</button>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">parallax x</span>
+          <input class="setting-value" id="cfg-scalarx" type="number" min="1" max="30" spellcheck="false"/>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">parallax y</span>
+          <input class="setting-value" id="cfg-scalary" type="number" min="1" max="30" spellcheck="false"/>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">debug mode</span>
+          <select class="setting-value" id="cfg-debug">
+            <option value="false">off</option>
+            <option value="true">on</option>
+          </select>
+        </div>
+        <div class="setting-row" style="justify-content:flex-end; border-top: 1px solid var(--grey2);">
+          <button class="setting-save" id="cfg-save-all">// save all //</button>
+        </div>
+      </div>
+      <div class="engine-badge" style="margin-top:7px; opacity:0.5;">esc to close</div>
+    </div><!-- end settings-panel -->
+    </div><!-- end ui-body -->
   </div>
 
   <!-- ── MINI PLAYER ── -->
@@ -450,6 +655,7 @@
         "playlistDir": "playlist/",
         "formats": ["mp3", "flac", "wav"]
       },
+      "jokesFile": "jokes.txt",
       "debug": false
     };
 
@@ -509,6 +715,31 @@
       parallaxInstance = initParallax();
     }
 
+    // ── MOUNTAIN GEOMETRY DRIFT ──────────────────────────
+    // Animates the SVG <g> elements directly — mountains themselves
+    // breathe up/down in SVG coordinate space, independent of parallax camera.
+    // Each range has a unique phase offset so they don't move in lockstep.
+    // Amplitude is tiny (max 3px in SVG units) — barely noticeable.
+    // Period matches the 5s sun pulse exactly.
+    const PULSE_MS = 5000;
+    const mtnDrifts = [
+      { el: document.getElementById('mtn-drift-1'), amp: 2.2, phase: 0      },
+      { el: document.getElementById('mtn-drift-2'), amp: 1.6, phase: 0.4    },
+      { el: document.getElementById('mtn-drift-3'), amp: 1.1, phase: 0.75   },
+    ];
+
+    function mountainDrift(ts) {
+      mtnDrifts.forEach(({ el, amp, phase }) => {
+        if (!el) return;
+        const t   = ((ts / PULSE_MS) + phase) % 1;           // 0..1 w/ phase
+        const ease = 0.5 - 0.5 * Math.cos(t * Math.PI * 2); // sine ease 0..1
+        const ty   = -amp * ease;                             // negative = up
+        el.setAttribute('transform', `translate(0, ${ty})`);
+      });
+      requestAnimationFrame(mountainDrift);
+    }
+    requestAnimationFrame(mountainDrift);
+
     // ── search ───────────────────────────────────────────
     const engine = SETTINGS.search.engine;
     const baseURL = SETTINGS.search.engines[engine] || SETTINGS.search.engines.duckduckgo;
@@ -555,7 +786,126 @@
       "Внимание! приближается выброс. бегом в укрытие, если жить охота!"
     ];
     const inp = document.getElementById('search-input');
-    inp.placeholder = JOKES[Math.floor(Math.random() * JOKES.length)];
+
+    function setRandomJoke(jokes) {
+      inp.placeholder = jokes[Math.floor(Math.random() * jokes.length)];
+    }
+
+    async function loadJokes(file) {
+      try {
+        const res = await fetch(file);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        const lines = text.split('\n')
+          .map(l => l.trim())
+          .filter(l => l && !l.startsWith('#'));
+        if (!lines.length) throw new Error('empty file');
+        dbg(`Loaded ${lines.length} jokes from ${file}`);
+        setRandomJoke(lines);
+      } catch(e) {
+        dbg(`jokes.txt load failed (${e.message}) — using fallback`);
+        setRandomJoke(JOKES_FALLBACK);
+      }
+    }
+    loadJokes(SETTINGS.jokesFile || 'jokes.txt');
+
+    // ── SETTINGS PANEL ───────────────────────────────────
+    const settingsBtn   = document.getElementById('settings-btn');
+    const settingsPanel = document.getElementById('settings-panel');
+    const searchView    = document.getElementById('search-view');
+    const uiLabel       = document.getElementById('ui-label');
+    let settingsOpen    = false;
+
+    function populateSettings() {
+      document.getElementById('cfg-engine').value   = SETTINGS.search.engine;
+      document.getElementById('cfg-jokes').value    = SETTINGS.jokesFile || 'jokes.txt';
+      document.getElementById('cfg-playlist').value = SETTINGS.player.playlistDir;
+      document.getElementById('cfg-scalarx').value  = SETTINGS.parallax.scalarX;
+      document.getElementById('cfg-scalary').value  = SETTINGS.parallax.scalarY;
+      document.getElementById('cfg-debug').value    = String(SETTINGS.debug);
+    }
+
+    const uiBody = document.getElementById('ui-body');
+
+    function openSettings() {
+      settingsOpen = true;
+      populateSettings();
+      uiLabel.textContent = '// settings //';
+
+      searchView.classList.remove('visible');
+      searchView.classList.add('hiding');
+      setTimeout(() => {
+        searchView.classList.add('hidden');
+        searchView.classList.remove('hiding');
+        settingsPanel.classList.add('active');
+        uiBody.classList.add('expanded');
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => settingsPanel.classList.add('visible'));
+        });
+      }, 140);
+    }
+
+    function closeSettings() {
+      settingsOpen = false;
+      uiLabel.textContent = '// search //';
+
+      settingsPanel.classList.remove('visible');
+      setTimeout(() => {
+        settingsPanel.classList.remove('active');
+        uiBody.classList.remove('expanded');
+        searchView.classList.remove('hidden');
+        searchView.classList.remove('hiding');
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => searchView.classList.add('visible'));
+        });
+        setTimeout(() => inp.focus(), 160);
+      }, 140);
+    }
+
+    settingsBtn.addEventListener('click', () => {
+      settingsBtn.classList.remove('spinning');
+      void settingsBtn.offsetWidth;
+      settingsBtn.classList.add('spinning');
+      settingsBtn.addEventListener('animationend', () => {
+        settingsBtn.classList.remove('spinning');
+      }, { once: true });
+      settingsOpen ? closeSettings() : openSettings();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && settingsOpen) closeSettings();
+    });
+
+    // live engine switch
+    document.getElementById('cfg-engine').addEventListener('change', e => {
+      SETTINGS.search.engine = e.target.value;
+      document.getElementById('engine-name').textContent = e.target.value;
+    });
+
+    // jokes file apply
+    document.getElementById('cfg-jokes-save').addEventListener('click', () => {
+      SETTINGS.jokesFile = document.getElementById('cfg-jokes').value.trim();
+      loadJokes(SETTINGS.jokesFile);
+    });
+
+    // playlist dir apply
+    document.getElementById('cfg-playlist-save').addEventListener('click', () => {
+      SETTINGS.player.playlistDir = document.getElementById('cfg-playlist').value.trim();
+    });
+
+    // save all — applies scalar changes and debug
+    document.getElementById('cfg-save-all').addEventListener('click', () => {
+      SETTINGS.parallax.scalarX = parseFloat(document.getElementById('cfg-scalarx').value) || 10;
+      SETTINGS.parallax.scalarY = parseFloat(document.getElementById('cfg-scalary').value) || 10;
+      SETTINGS.debug = document.getElementById('cfg-debug').value === 'true';
+      SETTINGS.search.engine = document.getElementById('cfg-engine').value;
+      document.getElementById('engine-name').textContent = SETTINGS.search.engine;
+      if (parallaxInstance) {
+        parallaxInstance.destroy();
+        parallaxInstance = initParallax();
+      }
+      closeSettings();
+    });
 
     // ── DEBUG ────────────────────────────────────────────
     const debugPanel = document.getElementById('debug-panel');
