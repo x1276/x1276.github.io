@@ -458,12 +458,56 @@
 
     // ── parallax init ────────────────────────────────────
     const scene = document.getElementById('scene');
-    const parallaxInstance = new Parallax(scene, {
-      scalarX:   SETTINGS.parallax.scalarX,
-      scalarY:   SETTINGS.parallax.scalarY,
-      frictionX: SETTINGS.parallax.frictionX,
-      frictionY: SETTINGS.parallax.frictionY,
-    });
+    const isMobile = /Mobi|Android|iPad|iPhone|iPod/i.test(navigator.userAgent);
+
+    function initParallax() {
+      return new Parallax(scene, {
+        scalarX:        SETTINGS.parallax.scalarX,
+        scalarY:        SETTINGS.parallax.scalarY,
+        frictionX:      SETTINGS.parallax.frictionX,
+        frictionY:      SETTINGS.parallax.frictionY,
+        relativeInput:  !isMobile,
+        gyroscope:      isMobile,
+      });
+    }
+
+    let parallaxInstance;
+
+    if (isMobile && typeof DeviceOrientationEvent !== 'undefined'
+        && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      // iOS 13+ requires explicit user gesture to grant gyro permission
+      // show a tiny tap-to-activate overlay
+      const gyroBtn = document.createElement('div');
+      gyroBtn.id = 'gyro-prompt';
+      gyroBtn.textContent = 'TAP TO ACTIVATE';
+      gyroBtn.style.cssText = `
+        position:fixed; inset:0; z-index:999;
+        display:flex; align-items:center; justify-content:center;
+        font-family:'Oswald',sans-serif; font-weight:700;
+        font-size:11px; letter-spacing:0.5em; color:var(--red);
+        background:rgba(10,5,5,0.6); cursor:pointer;
+      `;
+      document.body.appendChild(gyroBtn);
+      gyroBtn.addEventListener('click', () => {
+        DeviceOrientationEvent.requestPermission().then(state => {
+          gyroBtn.remove();
+          if (state === 'granted') {
+            dbg('Gyroscope permission granted');
+            parallaxInstance = initParallax();
+          } else {
+            dbg('Gyroscope permission denied — falling back to touch');
+            parallaxInstance = initParallax();
+          }
+        }).catch(e => {
+          dbg(`Gyroscope request error: ${e.message}`);
+          gyroBtn.remove();
+          parallaxInstance = initParallax();
+        });
+      }, { once: true });
+    } else {
+      // Android or desktop — no permission needed
+      parallaxInstance = initParallax();
+    }
 
     // ── search ───────────────────────────────────────────
     const engine = SETTINGS.search.engine;
