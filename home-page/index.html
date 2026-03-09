@@ -1,1 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>START</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/parallax/3.1.0/parallax.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;700&family=Courier+Prime&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+    :root {
+      --red:    #C0392B;
+      --red2:   #922b21;
+      --grey1:  #1c1c1c;
+      --grey2:  #2e2e2e;
+      --grey3:  #4a4a4a;
+      --grey4:  #7a7a7a;
+      --grey5:  #b0b0b0;
+      --cream:  #d4cfc8;
+      --sky1:   #1a1a22;
+      --sky2:   #2d1f1a;
+      --sky3:   #5c2e1e;
+      --sky4:   #8b3a1a;
+      --glow:   #c4622d;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--grey1);
+      font-family: 'Oswald', sans-serif;
+      cursor: crosshair;
+    }
+
+    /* ── SCENE ─────────────────────────────────────────── */
+    #scene {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .layer {
+      position: absolute;
+      width: 100%; height: 100%;
+      top: 0; left: 0;
+    }
+
+    /* ── SKY ────────────────────────────────────────────── */
+    #layer-sky { overflow: visible; }
+    #layer-sky canvas,
+    #layer-sky svg,
+    #layer-sky .fill { width: 100%; height: 100%; }
+
+    .sky-fill {
+      position: absolute;
+      top: -20%; left: -20%;
+      width: 140%; height: 140%;
+      background: linear-gradient(
+        180deg,
+        #0d0d12 0%,
+        #1a1220 15%,
+        #2d1a1a 35%,
+        #5c2e1e 55%,
+        #8b3a1a 70%,
+        #b5501f 82%,
+        #c4622d 90%,
+        #cf7a3a 100%
+      );
+    }
+
+    /* grain overlay */
+    .sky-fill::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    /* ── SUN ────────────────────────────────────────────── */
+    #layer-sun { display: flex; align-items: flex-end; justify-content: center; }
+    .sun-wrap {
+      position: absolute;
+      bottom: 38%; left: 50%;
+      transform: translateX(-50%);
+    }
+    .sun {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #f5d49a 0%, #e8963a 40%, #c4622d 70%, transparent 100%);
+      box-shadow:
+        0 0 40px 20px rgba(196,98,45,0.5),
+        0 0 100px 60px rgba(196,98,45,0.2),
+        0 0 200px 120px rgba(140,58,26,0.1);
+      animation: pulse 5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 40px 20px rgba(196,98,45,0.5), 0 0 100px 60px rgba(196,98,45,0.2); }
+      50%      { box-shadow: 0 0 55px 30px rgba(196,98,45,0.65), 0 0 130px 80px rgba(196,98,45,0.3); }
+    }
+
+    /* ── MOUNTAINS 1 — far, pale ───────────────────────── */
+    #layer-mountains1 svg { position: absolute; bottom: 8%; width: 100%; }
+
+    /* ── MOUNTAINS 2 — mid, dark grey ─────────────────── */
+    #layer-mountains2 svg { position: absolute; bottom: 8%; width: 100%; }
+
+    /* ── MOUNTAINS 3 — near, almost black ─────────────── */
+    #layer-mountains3 svg { position: absolute; bottom: 8%; width: 100%; }
+
+    /* ── FOG BAND ───────────────────────────────────────── */
+    .fog-band {
+      position: absolute;
+      bottom: 32%;
+      left: -10%; right: -10%;
+      height: 60px;
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(180,130,100,0.07) 40%,
+        rgba(180,130,100,0.12) 60%,
+        transparent 100%
+      );
+      filter: blur(8px);
+    }
+
+    /* ── FOREGROUND ─────────────────────────────────────── */
+    #layer-foreground svg { position: absolute; bottom: 0; width: 100%; }
+
+    /* constructivist grid lines — very subtle */
+    .grid-lines {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(192,57,43,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(192,57,43,0.04) 1px, transparent 1px);
+      background-size: 80px 80px;
+      pointer-events: none;
+    }
+
+    /* ── SEARCH UI ──────────────────────────────────────── */
+    #ui {
+      position: fixed;
+      top: 38%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      width: min(560px, 90vw);
+    }
+
+    /* top label — constructivist stamp */
+    .ui-label {
+      font-family: 'Oswald', sans-serif;
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      opacity: 0.85;
+    }
+
+    .search-wrap {
+      width: 100%;
+      display: flex;
+      border: 1.5px solid var(--grey3);
+      background: rgba(18,14,12, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: border-color 0.2s;
+    }
+    .search-wrap:focus-within {
+      border-color: var(--red);
+    }
+
+    #search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 14px 18px;
+      font-family: 'Courier Prime', monospace;
+      font-size: 15px;
+      color: var(--cream);
+      letter-spacing: 0.05em;
+      caret-color: var(--red);
+    }
+    #search-input::placeholder {
+      color: var(--grey3);
+      letter-spacing: 0.15em;
+      font-size: 13px;
+    }
+
+    #search-btn {
+      background: var(--red);
+      border: none;
+      padding: 0 20px;
+      cursor: pointer;
+      color: var(--cream);
+      font-family: 'Oswald', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    #search-btn:hover { background: var(--red2); }
+    #search-btn:active { background: #7b241c; }
+
+    /* engine badge */
+    .engine-badge {
+      align-self: flex-end;
+      margin-top: 7px;
+      font-family: 'Courier Prime', monospace;
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      color: var(--grey4);
+      text-transform: uppercase;
+    }
+    .engine-badge span { color: var(--red); }
+
+    /* ── CORNER MARK ────────────────────────────────────── */
+    .corner-mark {
+      position: fixed;
+      bottom: 22px; right: 28px;
+      font-family: 'Oswald', sans-serif;
+      font-weight: 300;
+      font-size: 10px;
+      letter-spacing: 0.35em;
+      color: var(--grey3);
+      text-transform: uppercase;
+      z-index: 99;
+    }
+
+    /* date/time top-left */
+    #clock {
+      position: fixed;
+      top: 24px; left: 30px;
+      z-index: 99;
+      font-family: 'Oswald', sans-serif;
+      font-weight: 300;
+      letter-spacing: 0.2em;
+    }
+    #clock .time {
+      font-size: 28px;
+      color: var(--cream);
+      line-height: 1;
+    }
+    #clock .date {
+      font-size: 10px;
+      color: var(--grey4);
+      letter-spacing: 0.35em;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    /* red accent bar */
+    .accent-bar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 3px; height: 100vh;
+      background: var(--red);
+      opacity: 0.7;
+      z-index: 200;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="accent-bar"></div>
+  <div style="position:fixed;bottom:0;left:0;width:100%;height:20vh;background:linear-gradient(to bottom,transparent 0%,#0a0806 70%);pointer-events:none;z-index:50;"></div>
+
+  <!-- ── PARALLAX SCENE ── -->
+  <ul id="scene">
+
+    <!-- 1. SKY -->
+    <li class="layer" id="layer-sky" data-depth="0.1">
+      <div class="sky-fill"></div>
+    </li>
+
+    <!-- 2. SUN -->
+    <li class="layer" id="layer-sun" data-depth="0.15">
+      <div class="sun-wrap"><div class="sun"></div></div>
+    </li>
+
+    <!-- 1.5 GRID — behind all mountains -->
+    <li class="layer" id="layer-grid" data-depth="0.2">
+      <div style="position:absolute;top:-20%;left:-20%;width:140%;height:140%;
+        background-image:
+          linear-gradient(rgba(192,57,43,0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(192,57,43,0.06) 1px, transparent 1px);
+        background-size: 80px 80px;
+        pointer-events:none;">
+      </div>
+    </li>
+
+    <!-- 3. MOUNTAINS — far -->
+    <li class="layer" id="layer-mountains1" data-depth="0.25">
+      <!-- viewBox wider than screen, left/right extended by 300px each side -->
+      <svg viewBox="-300 0 2040 320" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" style="position:absolute;bottom:0;width:130%;left:-15%;height:auto;">
+        <polygon points="-300,320 -300,180 -180,130 -80,170 20,110 120,155 220,90 340,140 460,75 580,125 700,65 820,115 940,55 1060,105 1180,75 1300,115 1380,85 1500,120 1620,70 1740,115 1860,80 1960,110 2060,90 2060,320" fill="#3d2a22" opacity="0.75"/>
+      </svg>
+    </li>
+
+    <!-- 4. MOUNTAINS — mid -->
+    <li class="layer" id="layer-mountains2" data-depth="0.4">
+      <svg viewBox="-300 0 2040 320" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" style="position:absolute;bottom:0;width:130%;left:-15%;height:auto;">
+        <polygon points="-300,320 -300,230 -180,175 -60,215 40,155 160,195 260,130 380,175 500,110 620,155 740,95 860,145 980,90 1100,140 1220,85 1340,130 1460,100 1580,140 1700,90 1820,135 1940,95 2060,130 2060,320" fill="#2a1e1a" opacity="0.9"/>
+      </svg>
+    </li>
+
+    <!-- 5. MOUNTAINS — near -->
+    <li class="layer" id="layer-mountains3" data-depth="0.55">
+      <svg viewBox="-300 0 2040 320" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" style="position:absolute;bottom:0;width:130%;left:-15%;height:auto;">
+        <defs>
+          <clipPath id="snow-clip">
+            <rect x="380"  y="150" width="80"  height="63"/>
+            <rect x="615"  y="140" width="90"  height="63"/>
+            <rect x="850"  y="134" width="95"  height="63"/>
+            <rect x="1088" y="130" width="100" height="63"/>
+            <rect x="1330" y="144" width="90"  height="63"/>
+          </clipPath>
+        </defs>
+        <polygon
+          points="-300,320 -300,270 -220,245 -140,268 -80,200 0,255 60,255 120,220 180,205 240,248 300,250 360,215 420,198 480,245 540,248 600,210 660,188 720,238 780,240 840,195 900,182 960,232 1020,235 1080,192 1140,178 1200,228 1260,230 1320,196 1380,192 1440,232 1500,235 1560,196 1620,188 1680,230 1740,232 1800,198 1860,195 1940,225 2060,210 2060,320"
+          fill="#1a1210"/>
+        <polygon
+          points="-300,320 -300,270 -220,245 -140,268 -80,200 0,255 60,255 120,220 180,205 240,248 300,250 360,215 420,198 480,245 540,248 600,210 660,188 720,238 780,240 840,195 900,182 960,232 1020,235 1080,192 1140,178 1200,228 1260,230 1320,196 1380,192 1440,232 1500,235 1560,196 1620,188 1680,230 1740,232 1800,198 1860,195 1940,225 2060,210 2060,320"
+          fill="#d4d0c9" opacity="0.5" clip-path="url(#snow-clip)"/>
+      </svg>
+    </li>
+
+    <!-- 6. FOG -->
+    <li class="layer" id="layer-fog" data-depth="0.65">
+      <div class="fog-band"></div>
+    </li>
+
+    <!-- 7. FOREGROUND + grid -->
+    <li class="layer" id="layer-foreground" data-depth="0.82">
+      <svg viewBox="-300 0 2040 120" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" style="position:absolute;bottom:-4%;width:130%;left:-15%;height:auto;">
+        <!-- flat steppe foreground — brutalist plateau -->
+        <rect x="-300" y="60" width="2640" height="60" fill="#0f0b09"/>
+        <!-- horizontal red constructivist stripe -->
+        <rect x="-300" y="57" width="2640" height="3" fill="#C0392B" opacity="0.6"/>
+      </svg>
+      <div class="grid-lines" style="display:none;"></div>
+    </li>
+
+  </ul>
+
+  <!-- ── UI OVERLAY ── -->
+  <div id="ui">
+    <div class="ui-label">// поиск //</div>
+    <div class="search-wrap">
+      <input
+        id="search-input"
+        type="text"
+        placeholder="SEARCH..."
+        autocomplete="off"
+        spellcheck="false"
+        autofocus
+      />
+      <button id="search-btn" type="button">GO</button>
+    </div>
+    <div class="engine-badge" id="engine-badge">via <span id="engine-name">duckduckgo</span></div>
+  </div>
+
+  <!-- ── MINI PLAYER ── -->
+  <div id="player" style="
+    position:fixed; top:20px; right:28px; z-index:200;
+    display:flex; align-items:center; gap:10px;
+    font-family:'Oswald',sans-serif;
+  ">
+    <div id="player-track" style="
+      font-size:9px; letter-spacing:0.25em; color:var(--grey4);
+      text-transform:uppercase; max-width:160px;
+      overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+      text-align:right;
+    ">—</div>
+    <button id="player-btn" style="
+      background:transparent; border:1.5px solid var(--grey3);
+      width:32px; height:32px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:border-color 0.15s;
+    " onmouseenter="this.style.borderColor='var(--red)'"
+       onmouseleave="this.style.borderColor='var(--grey3)'">
+      <svg id="player-icon" width="12" height="12" viewBox="0 0 12 12" fill="var(--cream)">
+        <polygon id="icon-play"  points="2,1 11,6 2,11" />
+        <g       id="icon-pause" style="display:none">
+          <rect x="1" y="1" width="3.5" height="10"/>
+          <rect x="7.5" y="1" width="3.5" height="10"/>
+        </g>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ── DEBUG PANEL ── -->
+  <div id="debug-panel" style="
+    display:none; position:fixed; top:calc(38% + 10px); left:50%;
+    transform:translateX(-50%); z-index:101;
+    width:min(560px,90vw); padding:8px 12px;
+    background:rgba(10,5,5,0.85); border-left:2px solid var(--red);
+    font-family:'Courier Prime',monospace; font-size:10px;
+    color:#e07060; letter-spacing:0.1em; line-height:1.6;
+    max-height:120px; overflow-y:auto;
+  "></div>
+
+  <div id="clock">
+    <div class="time" id="time-display">00:00</div>
+    <div class="date" id="date-display">MON · 00 JAN</div>
+  </div>
+
+  <div class="corner-mark">АЛТАЙ · START</div>
+
+  <script>
+    // ── load settings ────────────────────────────────────
+    // Since this runs as a local file, we embed settings directly.
+    // To reload from settings.json when served via a local server,
+    // replace the object below with a fetch('settings.json').
+    const SETTINGS = {
+      "search": {
+        "engine": "duckduckgo",
+        "engines": {
+          "duckduckgo": "https://duckduckgo.com/?q=",
+          "google":     "https://www.google.com/search?q=",
+          "brave":      "https://search.brave.com/search?q=",
+          "bing":       "https://www.bing.com/search?q="
+        }
+      },
+      "parallax": {
+        "scalarX": 10,
+        "scalarY": 10,
+        "frictionX": 0.1,
+        "frictionY": 0.1
+      },
+      "theme": {
+        "accentColor":      "#C0392B",
+        "bgColor":          "#1a1a1a",
+        "searchBarOpacity": 0.85
+      },
+      "player": {
+        "playlistDir": "playlist/",
+        "formats": ["mp3", "flac", "wav"]
+      },
+      "debug": false
+    };
+
+    // apply theme vars from settings
+    document.documentElement.style.setProperty('--red', SETTINGS.theme.accentColor);
+
+    // ── parallax init ────────────────────────────────────
+    const scene = document.getElementById('scene');
+    const parallaxInstance = new Parallax(scene, {
+      scalarX:   SETTINGS.parallax.scalarX,
+      scalarY:   SETTINGS.parallax.scalarY,
+      frictionX: SETTINGS.parallax.frictionX,
+      frictionY: SETTINGS.parallax.frictionY,
+    });
+
+    // ── search ───────────────────────────────────────────
+    const engine = SETTINGS.search.engine;
+    const baseURL = SETTINGS.search.engines[engine] || SETTINGS.search.engines.duckduckgo;
+    document.getElementById('engine-name').textContent = engine;
+
+    function doSearch() {
+      const q = document.getElementById('search-input').value.trim();
+      if (!q) return;
+      window.location.href = baseURL + encodeURIComponent(q);
+    }
+
+    document.getElementById('search-btn').addEventListener('click', doSearch);
+    document.getElementById('search-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doSearch();
+    });
+
+    // ── clock ────────────────────────────────────────────
+    const DAYS   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2,'0');
+      const m = String(now.getMinutes()).padStart(2,'0');
+      document.getElementById('time-display').textContent = `${h}:${m}`;
+      const day  = DAYS[now.getDay()];
+      const date = String(now.getDate()).padStart(2,'0');
+      const mon  = MONTHS[now.getMonth()];
+      document.getElementById('date-display').textContent = `${day} · ${date} ${mon}`;
+    }
+    updateClock();
+    setInterval(updateClock, 10000);
+
+    // ── DEBUG ────────────────────────────────────────────
+    const debugPanel = document.getElementById('debug-panel');
+    function dbg(msg) {
+      if (!SETTINGS.debug) return;
+      debugPanel.style.display = 'block';
+      debugPanel.innerHTML += `<div>> ${msg}</div>`;
+      debugPanel.scrollTop = debugPanel.scrollHeight;
+    }
+
+    // ── PLAYER ──────────────────────────────────────────
+    const audio       = new Audio();
+    const btnEl       = document.getElementById('player-btn');
+    const trackEl     = document.getElementById('player-track');
+    const iconPlay    = document.getElementById('icon-play');
+    const iconPause   = document.getElementById('icon-pause');
+
+    let playlist = [];
+    let currentIdx = 0;
+    let playing = false;
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function setPlayingUI(state) {
+      playing = state;
+      iconPlay.style.display  = state ? 'none'  : 'block';
+      iconPause.style.display = state ? 'block' : 'none';
+    }
+
+    function loadTrack(idx) {
+      if (!playlist.length) { dbg('Playlist empty — nothing to play.'); return; }
+      const src = SETTINGS.player.playlistDir + playlist[idx];
+      audio.src = src;
+      trackEl.textContent = playlist[idx].replace(/\.[^.]+$/, '');
+      dbg(`Loading track [${idx}]: ${playlist[idx]}`);
+      audio.play().then(() => setPlayingUI(true)).catch(e => {
+        dbg(`Play error: ${e.message}`);
+        setPlayingUI(false);
+      });
+    }
+
+    audio.addEventListener('ended', () => {
+      currentIdx = (currentIdx + 1) % playlist.length;
+      loadTrack(currentIdx);
+    });
+
+    audio.addEventListener('error', () => {
+      dbg(`Audio error on: ${playlist[currentIdx]} — skipping`);
+      currentIdx = (currentIdx + 1) % playlist.length;
+      setTimeout(() => loadTrack(currentIdx), 500);
+    });
+
+    btnEl.addEventListener('click', () => {
+      if (!playlist.length) { dbg('No tracks in playlist/'); return; }
+      if (playing) {
+        audio.pause();
+        setPlayingUI(false);
+      } else {
+        if (!audio.src || audio.src === window.location.href) {
+          loadTrack(currentIdx);
+        } else {
+          audio.play().then(() => setPlayingUI(true)).catch(e => dbg(`Resume error: ${e.message}`));
+        }
+      }
+    });
+
+    // try to fetch playlist/index.json — generated by scan_playlist.py
+    (async () => {
+      try {
+        const dir = SETTINGS.player.playlistDir;
+        const res = await fetch(dir + 'index.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status} — run scan_playlist.py first`);
+        const data = await res.json();
+        if (!data.tracks || !data.tracks.length) throw new Error('index.json has no tracks');
+        playlist = shuffle(data.tracks);
+        dbg(`Loaded ${playlist.length} track(s) from ${dir}index.json`);
+        trackEl.textContent = playlist[0].replace(/\.[^.]+$/, '');
+      } catch(e) {
+        dbg(`Playlist load failed: ${e.message}`);
+        trackEl.textContent = 'no playlist';
+      }
+    })();
+  </script>
+</body>
+</html>
