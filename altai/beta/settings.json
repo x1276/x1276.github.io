@@ -1,0 +1,36 @@
+{
+  "search": {
+    "engine": "duckduckgo",
+    "engines": {
+      "duckduckgo": "https://duckduckgo.com/?q=",
+      "google": "https://www.google.com/search?q=",
+      "brave": "https://search.brave.com/search?q=",
+      "bing": "https://www.bing.com/search?q="
+    }
+  },
+  "parallax": {
+    "scalarX": 10,
+    "scalarY": 10,
+    "frictionX": 0.1,
+    "frictionY": 0.1,
+    "layers": [
+      { "id": "layer-sky",        "depth": 0.1,  "label": "Sky gradient" },
+      { "id": "layer-grid",       "depth": 0.2,  "label": "Grid overlay (behind mountains)" },
+      { "id": "layer-mountains1", "depth": 0.25, "label": "Far mountain range" },
+      { "id": "layer-mountains2", "depth": 0.4,  "label": "Mid mountain range" },
+      { "id": "layer-mountains3", "depth": 0.55, "label": "Near mountain silhouette" },
+      { "id": "layer-fog",        "depth": 0.65, "label": "Fog / haze band" },
+      { "id": "layer-foreground", "depth": 0.82, "label": "Foreground geometry" }
+    ]
+  },
+  "theme": {
+    "accentColor": "#C0392B",
+    "bgColor": "#1a1a1a",
+    "searchBarOpacity": 0.85
+  },
+  "player": {
+    "playlistDir": "playlist/",
+    "formats": ["mp3", "flac", "wav"]
+  },
+  "debug": false
+}
